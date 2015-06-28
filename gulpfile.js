@@ -11,6 +11,7 @@ var gulp = require('gulp'),
     notify = require('gulp-notify'),
     cache = require('gulp-cache'),
     livereload = require('gulp-livereload');
+    connect = require('gulp-connect');
 
 gulp.task('style', function(){
   return sass('src/style/main.scss', { style: 'expanded' })
@@ -21,6 +22,7 @@ gulp.task('style', function(){
           .pipe(rename({suffix:'.min'}))
           .pipe(minifycss())
           .pipe(gulp.dest('dist/style'))
+          .pipe(connect.reload())
           .pipe(notify({message:'Style task complete'}));
 })
 
@@ -33,6 +35,7 @@ gulp.task('script', function(){
           .pipe(rename({suffix:'.min'}))
           .pipe(uglify())
           .pipe(gulp.dest('dist/script'))
+          .pipe(connect.reload())
           .pipe(notify({message:'script task complete'}));
 });
 
@@ -40,7 +43,13 @@ gulp.task('image',function(){
   return gulp.src('src/images/**/*')
           .pipe(cache(imagemin({optimizationLevel: 3,progressive: true, interlaced: true})))
           .pipe(gulp.dest('dist/images'))
+          .pipe(connect.reload())
           .pipe(notify({message: 'image task complete'}));
+});
+
+gulp.task('html', function(){
+  return gulp.src('**/*.html')
+            .pipe(connect.reload())
 });
 
 gulp.task('clean', function(){
@@ -48,9 +57,6 @@ gulp.task('clean', function(){
           .pipe(clean());
 });
 
-gulp.task('default', ['clean'], function() {
-  gulp.start('style','script','image');
-});
 
 
 gulp.task('watch', function(){
@@ -59,12 +65,20 @@ gulp.task('watch', function(){
   gulp.watch('src/script/**/*.js', ['script']);
 
   gulp.watch('src/images/**/*', ['image']);
+
+  gulp.watch('**/*.html', ['html']);
 });
 
 
-/*gulp.task('watch', function(){
-  var server = livereload();
-  gulp.watch(['dist/**']).on('change', function(file) {
-    server.change(file.path);
+gulp.task('connect', function(){
+  connect.server({
+    //root:'angular-to-do-list',
+    livereload:true
   });
-});*/
+});
+
+
+gulp.task('default', ['clean'], function() {
+  gulp.start('style','script','image');
+  gulp.start('connect', 'watch');
+});
